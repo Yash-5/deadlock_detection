@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ChandyANDModel {
 	public enum msgType {
-		PROBE, REPLY
+		PROBE, DEADLOCK
 	}
 
 	static Integer myId = 0;
@@ -62,24 +62,23 @@ public class ChandyANDModel {
 		return orig.toString() + " " + sender.toString() + " " + target.toString() + " " + flag.toString();
 	}
 
-	static void handleDeadlock(Integer node) {
-		// System.out.println("Deadlock detected at node " + node);
-		// String outMsg = makeMsg(node, -1, -1);
-		// for(Integer x: adjList.get(node)) {
-		// 	try {
-		// 		DataOutputStream dout = new DataOutputStream(socketMap.get(x).getOutputStream());
-		// 		dout.writeUTF(outMsg);
-		// 		dout.flush();
-		// 	} catch(Exception e) {
-		// 		continue;
-		// 	}
-		// }
-		// System.exit(0);
+	static void handleDeadlock() {
+		System.out.println("Deadlock detected");
+		for(Integer x: dependants) {
+			try {
+				String outMsg = makeMsg(myId, myId, x, msgType.DEADLOCK.ordinal());
+				DataOutputStream dout = new DataOutputStream(socketMap.get(routing.get(x)).getOutputStream());
+				dout.writeUTF(outMsg);
+				dout.flush();
+			} catch(Exception e) {
+				continue;
+			}
+		}
 	}
 
 	static void dowork(ArrayList<Integer> routing) throws Exception {
 		if(wfgList.get(myId).contains(myId)) {
-			handleDeadlock(myId);
+			handleDeadlock();
 		}
 		for(Integer x: wfgList.get(myId)) {
 			Integer intermediate = routing.get(x);
@@ -111,7 +110,7 @@ public class ChandyANDModel {
 				}
 				if (type == msgType.PROBE) {	//It's a probe message
 					if (orig == myId) {	//I am the origin, so there's a deadlock
-						//Deadlock
+						handleDeadlock();
 					} else {	//I got a probe message, probe all those that I depend upon if not already done
 						if (!reqSent.contains(orig)) { //First one	
 							for (Integer wf: wfgList.get(myId)) {
@@ -127,7 +126,7 @@ public class ChandyANDModel {
 						reqSent.add(orig);
 					}
 				} else { //Flag is 1 now, it's a deadlock message
-
+					handleDeadlock();
 				}
 				/*
 				Original one:
