@@ -94,6 +94,7 @@ public class ChandyANDModel {
 		for(Integer x: dependants) {
 			try {
 				sendDeadlockMsg(routing, x);
+				System.out.println((myId + 1) + " sent a DEADLOCK message to " + (x + 1));
 			} catch(Exception e) {
 				continue;
 			}
@@ -110,6 +111,7 @@ public class ChandyANDModel {
 				String probeMsg = makeMsg(myId, myId, x, msgType.PROBE.ordinal());
 				DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 				dout.writeUTF(probeMsg);
+				System.out.println((myId + 1) + " sent a PROBE message to " + (x + 1));
 				dout.flush();
 			}
 		}
@@ -135,10 +137,12 @@ public class ChandyANDModel {
 					continue;
 				}
 				if (type == msgType.PROBE) {	//It's a probe message
-					if (orig == myId) {	//I am the origin, so there's a deadlock
+					System.out.println((myId + 1) + " received a PROBE message from " + (sender + 1));
+					if (orig == myId) {	//I am the origin, so there's a deadlock	
 						handleDeadlock(routing);
 					} else if (myType == processType.DEADLOCKED) {
 						sendDeadlockMsg(routing, sender);
+						System.out.println((myId + 1) + " sent a DEADLOCK message to " + (sender + 1));
 					} else if (myType == processType.WAITING) {	//I got a probe message, probe all those that I depend upon if not already done
 						if (!reqSent.contains(orig)) { //First one	
 							for (Integer wf: wfgList.get(myId)) {
@@ -147,6 +151,7 @@ public class ChandyANDModel {
 								DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 								dout.writeUTF(probeMsg);
 								dout.flush();
+								System.out.println((myId + 1) + " sent a PROBE message to " + (wf + 1));
 							}
 						}
 						dependants.add(orig);
@@ -154,6 +159,7 @@ public class ChandyANDModel {
 						reqSent.add(orig);
 					}
 				} else { //Flag is 1 now, it's a deadlock message
+					System.out.println((myId + 1) + " received a DEADLOCK message from " + (sender + 1));
 					handleDeadlock(routing);
 				}
 			}

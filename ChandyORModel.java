@@ -82,18 +82,8 @@ public class ChandyORModel {
 	}
 
 	static void handleDeadlock() {
-		// if (myType == processType.DEADLOCKED) {
-		// 	return;
-		// }
 		System.out.println("Deadlock detected");
 		myType = processType.DEADLOCKED;
-		// for(Integer x: dependants) {
-		// 	try {
-		// 		sendDeadlockMsg(routing, x);
-		// 	} catch(Exception e) {
-		// 		continue;
-		// 	}
-		// }
 	}
 
 	static void dowork(ArrayList<Integer> routing) throws Exception {
@@ -101,11 +91,10 @@ public class ChandyORModel {
 			wait.set(myId, true);
 			num.set(myId, wfgList.get(myId).size());
 			engager.put(myId, myId);
-			System.out.println("Init " + num.get(myId));
 			for(Integer x: wfgList.get(myId)) {
 				Integer intermediate = routing.get(x);
 				String probeMsg = makeMsg(myId, myId, x, msgType.QUERY.ordinal());
-				System.out.println(myId + " sent a QUERY message to " + x); 
+				System.out.println((myId + 1) + " sent a QUERY message to " + (x + 1)); 
 				DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 				dout.writeUTF(probeMsg);
 				dout.flush();
@@ -135,7 +124,7 @@ public class ChandyORModel {
 				if (type == msgType.QUERY) {	//It's a query message
 					if (myType == processType.WAITING) {
 						if(engager.get(orig) == null) {
-							System.out.println(myId + " received a engaging query from " + sender);
+							System.out.println((myId + 1) + " received a ENGAGING QUERY from " + (sender + 1));
 							engager.put(orig, sender);
 							num.set(orig, wfgList.get(myId).size());
 							wait.set(orig, true);
@@ -144,36 +133,34 @@ public class ChandyORModel {
 								String queryMsg = makeMsg(orig, myId, wf, msgType.QUERY.ordinal());
 								DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 								dout.writeUTF(queryMsg);
+								System.out.println((myId + 1) + " sent a QUERY message to " + (wf + 1));
 								dout.flush();
 							}
 						} else if (wait.get(orig)) {
-							System.out.println(myId + " received a second-time query from " + sender);
+							System.out.println((myId + 1) + " received a REPEAT QUERY from " + (sender + 1));
 							Integer intermediate = routing.get(sender);
 							String replyMsg = makeMsg(orig, myId, sender, msgType.REPLY.ordinal());
 							DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 							dout.writeUTF(replyMsg);
 							dout.flush();
+							System.out.println((myId + 1) + " sent a REPLY message to " + (sender + 1));
 						}
 					}
 				} else {
 					if (wait.get(orig)) {
-						System.out.println(myId + " received a reply message from " + sender);
-						System.out.println("do you work? " + orig + " " + num.get(orig));
+						System.out.println((myId + 1) + " received a REPLY message from " + (sender + 1));
 						Integer temp = num.get(orig); 
 						num.set(orig, temp - 1);
-						System.out.println(orig + " " + num.get(orig));
 						if (num.get(orig) == 0) {
-							System.out.println("HERE1");
 							if (orig == myId) {
-								System.out.println("HERE2");
 								handleDeadlock();
 							} else {
-								System.out.println("HERE3");
 								Integer en = engager.get(orig);
 								Integer intermediate = routing.get(en);
 								String replyMsg = makeMsg(orig, myId, en, msgType.REPLY.ordinal());
 								DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 								dout.writeUTF(replyMsg);
+								System.out.println((myId + 1) + " sent a REPLY message to " + (en + 1));
 								dout.flush();
 							}
 						}
