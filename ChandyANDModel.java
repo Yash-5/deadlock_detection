@@ -5,12 +5,6 @@ import java.math.*;
 import java.text.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-
-/*
-TODO:	Adding process types enum
-		Test this
-		Add analysis stuff to print
-*/
 public class ChandyANDModel {
 	public enum msgType {
 		PROBE, DEADLOCK
