@@ -99,10 +99,13 @@ public class ChandyORModel {
 	static void dowork(ArrayList<Integer> routing) throws Exception {
 		if (probeFlag) {
 			wait.set(myId, true);
-			num.set(myId, adjList.get(i).size);
+			num.set(myId, wfgList.get(myId).size());
+			engager.put(myId, myId);
+			System.out.println("Init " + num.get(myId));
 			for(Integer x: wfgList.get(myId)) {
 				Integer intermediate = routing.get(x);
 				String probeMsg = makeMsg(myId, myId, x, msgType.QUERY.ordinal());
+				System.out.println(myId + " sent a QUERY message to " + x); 
 				DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 				dout.writeUTF(probeMsg);
 				dout.flush();
@@ -132,8 +135,9 @@ public class ChandyORModel {
 				if (type == msgType.QUERY) {	//It's a query message
 					if (myType == processType.WAITING) {
 						if(engager.get(orig) == null) {
+							System.out.println(myId + " received a engaging query from " + sender);
 							engager.put(orig, sender);
-							num.set(orig, adjList.get(myId).size());
+							num.set(orig, wfgList.get(myId).size());
 							wait.set(orig, true);
 							for(Integer wf: wfgList.get(myId)) {
 								Integer intermediate = routing.get(wf);
@@ -143,8 +147,9 @@ public class ChandyORModel {
 								dout.flush();
 							}
 						} else if (wait.get(orig)) {
+							System.out.println(myId + " received a second-time query from " + sender);
 							Integer intermediate = routing.get(sender);
-							String replyMsg = makeMsg(orig, myId, sender, msgType.QUERY.ordinal());
+							String replyMsg = makeMsg(orig, myId, sender, msgType.REPLY.ordinal());
 							DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 							dout.writeUTF(replyMsg);
 							dout.flush();
@@ -152,14 +157,21 @@ public class ChandyORModel {
 					}
 				} else {
 					if (wait.get(orig)) {
-						num.set(orig, num.get(orig) - 1);
+						System.out.println(myId + " received a reply message from " + sender);
+						System.out.println("do you work? " + orig + " " + num.get(orig));
+						Integer temp = num.get(orig); 
+						num.set(orig, temp - 1);
+						System.out.println(orig + " " + num.get(orig));
 						if (num.get(orig) == 0) {
+							System.out.println("HERE1");
 							if (orig == myId) {
+								System.out.println("HERE2");
 								handleDeadlock();
 							} else {
+								System.out.println("HERE3");
 								Integer en = engager.get(orig);
 								Integer intermediate = routing.get(en);
-								String replyMsg = makeMsg(orig, myId, en, msgType.QUERY.ordinal());
+								String replyMsg = makeMsg(orig, myId, en, msgType.REPLY.ordinal());
 								DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 								dout.writeUTF(replyMsg);
 								dout.flush();
@@ -173,7 +185,7 @@ public class ChandyORModel {
 
 	public static void main(String[] args) throws Exception {
 		if(args.length != 2) {
-			System.out.println("Usage: java ChandyANDModel <id> <Probe flag>");
+			System.out.println("Usage: java ChandyORModel <id> <Probe flag>");
 			System.exit(-1);
 		}
 
