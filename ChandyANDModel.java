@@ -17,7 +17,7 @@ public class ChandyANDModel {
 	}
 
 	public enum processType {
-		FREE, WAITING, DEADLOCKED
+		ACTIVE, WAITING, DEADLOCKED
 	}
 
 	static Integer myId = 0;
@@ -29,7 +29,7 @@ public class ChandyANDModel {
 	static HashSet<Integer> dependants = new HashSet<>();
 	static HashMap<Integer, Socket> socketMap = new HashMap<Integer, Socket>();
 	static HashSet<Integer> reqSent = new HashSet<Integer>();
-	static processType myType = processType.FREE;
+	static processType myType = processType.ACTIVE;
 	static Boolean probeFlag = false;
 	
 	static Integer getHash(Integer x, Integer y) {
