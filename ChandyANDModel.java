@@ -30,7 +30,8 @@ public class ChandyANDModel {
 	static HashMap<Integer, Socket> socketMap = new HashMap<Integer, Socket>();
 	static HashSet<Integer> reqSent = new HashSet<Integer>();
 	static processType myType = processType.FREE;
-
+	static Boolean probeFlag = false;
+	
 	static Integer getHash(Integer x, Integer y) {
 		return numProcess * Math.min(x, y) + Math.max(x, y) + 2000;
 	}
@@ -45,17 +46,21 @@ public class ChandyANDModel {
 		visited.set(curr, true);
 		cntVisited++;
 		Queue<Integer> nodes = new LinkedList<Integer>();
-		nodes.add(curr);
+		nodes.add(-1);
 		nodes.add(curr);
 		while(!nodes.isEmpty()) {
 			Integer par = nodes.poll();
 			Integer x = nodes.poll();
 			for(Integer neigh: adjList.get(x)) {
 				if(!visited.get(neigh)) {
-					if(par == curr) {
-						nodes.add(x);
+					if(par == -1) {
+						nodes.add(curr);
 						nodes.add(neigh);
 						routing.get(curr).set(neigh, neigh);
+					} else if(par == curr) {
+						nodes.add(x);
+						nodes.add(neigh);
+						routing.get(curr).set(neigh, x);
 					} else {
 						nodes.add(par);
 						nodes.add(neigh);
@@ -99,12 +104,14 @@ public class ChandyANDModel {
 		if(wfgList.get(myId).contains(myId)) {
 			handleDeadlock(routing);
 		}
-		for(Integer x: wfgList.get(myId)) {
-			Integer intermediate = routing.get(x);
-			String probeMsg = makeMsg(myId, myId, x, 0);
-			DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
-			dout.writeUTF(probeMsg);
-			dout.flush();
+		if (probeFlag) {
+			for(Integer x: wfgList.get(myId)) {
+				Integer intermediate = routing.get(x);
+				String probeMsg = makeMsg(myId, myId, x, 0);
+				DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
+				dout.writeUTF(probeMsg);
+				dout.flush();
+			}
 		}
 		while(true) {
 			for(Integer x: adjList.get(myId)) {
@@ -154,14 +161,18 @@ public class ChandyANDModel {
 	}
 
 	public static void main(String[] args) throws Exception {
-		if(args.length != 1) {
-			System.out.println("Usage: java ChandyANDModel <id>");
+		if(args.length != 2) {
+			System.out.println("Usage: java ChandyANDModel <id> <Probe flag>");
 			System.exit(-1);
 		}
 
 		myId = Integer.parseInt(args[0]);
 		myId--;
-
+		
+		if(Integer.parseInt(args[1]) == 1) {
+			probeFlag = true;
+		}
+		
 		BufferedReader inReader = new BufferedReader(new FileReader("inp-params.txt"));
 		String tempLine = inReader.readLine();
 		String[] nums = tempLine.split(" ");
@@ -181,11 +192,12 @@ public class ChandyANDModel {
 
 		//Can combine next two blocks in a function, do if there's time
 		for (Integer i = 0; i < numProcess; i++) {
+			tempLine = inReader.readLine();
 			nums = tempLine.split(" ");
 			Integer curr = Integer.parseInt(nums[0]);
 			curr--;
 			for(Integer j = 1; j < nums.length; j++) {
-				Integer x = Integer.parseInt(nums[i]);
+				Integer x = Integer.parseInt(nums[j]);
 				x--;
 				adjList.get(curr).add(x);
 				adjList.get(x).add(curr);
@@ -193,11 +205,12 @@ public class ChandyANDModel {
 		}
 
 		for (Integer i = 0; i < numProcess; i++) {
+			tempLine = inReader.readLine();
 			nums = tempLine.split(" ");
 			Integer curr = Integer.parseInt(nums[0]);
 			curr--;
 			for(Integer j = 1; j < nums.length; j++) {
-				Integer x = Integer.parseInt(nums[i]);
+				Integer x = Integer.parseInt(nums[j]);
 				x--;
 				wfgList.get(curr).add(x);
 				if(x == myId) {
@@ -229,7 +242,7 @@ public class ChandyANDModel {
 				System.exit(-1);
 			}
 		}
-
+			
 		for(Integer neigh: adjList.get(myId)) {	//Establising connections
 			if(neigh < myId) {
 				while(true) {
