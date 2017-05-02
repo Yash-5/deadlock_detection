@@ -107,7 +107,7 @@ public class ChandyANDModel {
 		if (probeFlag) {
 			for(Integer x: wfgList.get(myId)) {
 				Integer intermediate = routing.get(x);
-				String probeMsg = makeMsg(myId, myId, x, 0);
+				String probeMsg = makeMsg(myId, myId, x, msgType.PROBE.ordinal());
 				DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
 				dout.writeUTF(probeMsg);
 				dout.flush();
