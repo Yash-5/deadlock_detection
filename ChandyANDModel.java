@@ -166,6 +166,29 @@ public class ChandyANDModel {
 		}
 	}
 
+	static ArrayList<ArrayList<Integer>> getList(Boolean isDirected, BufferedReader inReader) throws IOException {
+		ArrayList<ArrayList<Integer>> adjList = new ArrayList<ArrayList<Integer>>();
+		while(adjList.size() < numProcess) {
+			adjList.add(new ArrayList<Integer>());
+		}
+		for (Integer i = 0; i < numProcess; i++) {
+			String tempLine;
+			tempLine = inReader.readLine();
+			String[] nums = tempLine.split(" ");
+			Integer curr = Integer.parseInt(nums[0]);
+			curr--;
+			for(Integer j = 1; j < nums.length; j++) {
+				Integer x = Integer.parseInt(nums[j]);
+				x--;
+				adjList.get(curr).add(x);
+				if(!isDirected) {
+					adjList.get(x).add(curr);
+				}
+			}
+		}
+		return adjList;
+	}
+
 	public static void main(String[] args) throws Exception {
 		if(args.length != 2) {
 			System.out.println("Usage: java ChandyANDModel <id> <Probe flag>");
@@ -196,34 +219,8 @@ public class ChandyANDModel {
 			routing.add(new ArrayList<Integer>());
 		}
 
-		//Can combine next two blocks in a function, do if there's time
-		for (Integer i = 0; i < numProcess; i++) {
-			tempLine = inReader.readLine();
-			nums = tempLine.split(" ");
-			Integer curr = Integer.parseInt(nums[0]);
-			curr--;
-			for(Integer j = 1; j < nums.length; j++) {
-				Integer x = Integer.parseInt(nums[j]);
-				x--;
-				adjList.get(curr).add(x);
-				adjList.get(x).add(curr);
-			}
-		}
-
-		for (Integer i = 0; i < numProcess; i++) {
-			tempLine = inReader.readLine();
-			nums = tempLine.split(" ");
-			Integer curr = Integer.parseInt(nums[0]);
-			curr--;
-			for(Integer j = 1; j < nums.length; j++) {
-				Integer x = Integer.parseInt(nums[j]);
-				x--;
-				wfgList.get(curr).add(x);
-				if(x == myId) {
-					dependants.add(curr);
-				}
-			}
-		}
+		adjList = getList(false, inReader);
+		wfgList = getList(true, inReader);
 
 		for(int i = 0; i < numProcess; i++) {	//Making adjacency lists unique
 			HashSet<Integer> temp = new HashSet<>();
