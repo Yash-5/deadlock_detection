@@ -149,26 +149,6 @@ public class ChandyANDModel {
 				} else { //Flag is 1 now, it's a deadlock message
 					handleDeadlock(routing);
 				}
-				/*
-				Original one:
-				if(target == -1) {
-					handleDeadlock(orig);
-				} else if(target != myId) {
-					String outMsg = makeMsg(orig, sender, target, 0);
-					DataOutputStream dout = new DataOutputStream(socketMap.get(routing.get(target)).getOutputStream());
-					dout.writeUTF(outMsg);
-					dout.flush();
-				} else if (orig == myId) {
-					handleDeadlock(myId);
-				} else {
-					for(Integer wf: wfgList.get(myId)) {
-						Integer intermediate = routing.get(wf);
-						String probeMsg = makeMsg(orig, myId, wf, 0);
-						DataOutputStream dout = new DataOutputStream(socketMap.get(intermediate).getOutputStream());
-						dout.writeUTF(probeMsg);
-						dout.flush();
-					}
-				}*/
 			}
 		}
 	}
