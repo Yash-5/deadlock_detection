@@ -98,6 +98,8 @@ public class ChandyORModel {
 
 	static void dowork(ArrayList<Integer> routing) throws Exception {
 		if (probeFlag) {
+			wait.set(myId, true);
+			num.set(myId, adjList.get(i).size);
 			for(Integer x: wfgList.get(myId)) {
 				Integer intermediate = routing.get(x);
 				String probeMsg = makeMsg(myId, myId, x, msgType.QUERY.ordinal());
