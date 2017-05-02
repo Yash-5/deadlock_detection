@@ -16,6 +16,10 @@ public class ChandyANDModel {
 		PROBE, DEADLOCK
 	}
 
+	public enum processType {
+		FREE, WAITING, DEADLOCKED
+	}
+
 	static Integer myId = 0;
 	static Integer numProcess = 0;
 	static ArrayList<String> ipList = new ArrayList<String>();
@@ -25,6 +29,7 @@ public class ChandyANDModel {
 	static HashSet<Integer> dependants = new HashSet<>();
 	static HashMap<Integer, Socket> socketMap = new HashMap<Integer, Socket>();
 	static HashSet<Integer> reqSent = new HashSet<Integer>();
+	static processType myType = processType.FREE;
 
 	static Integer getHash(Integer x, Integer y) {
 		return numProcess * Math.min(x, y) + Math.max(x, y) + 2000;
@@ -68,14 +73,22 @@ public class ChandyANDModel {
 		return orig.toString() + " " + sender.toString() + " " + target.toString() + " " + flag.toString();
 	}
 
-	static void handleDeadlock() {
+	static void sendDeadlockMsg(ArrayList<Integer> routing, Integer dest) throws IOException {
+		String outMsg = makeMsg(myId, myId, dest, msgType.DEADLOCK.ordinal());
+		DataOutputStream dout = new DataOutputStream(socketMap.get(routing.get(dest)).getOutputStream());
+		dout.writeUTF(outMsg);
+		dout.flush();
+	}
+
+	static void handleDeadlock(ArrayList<Integer> routing) {
+		if (myType == processType.DEADLOCKED) {
+			return;
+		}
 		System.out.println("Deadlock detected");
+		myType = processType.DEADLOCKED;
 		for(Integer x: dependants) {
 			try {
-				String outMsg = makeMsg(myId, myId, x, msgType.DEADLOCK.ordinal());
-				DataOutputStream dout = new DataOutputStream(socketMap.get(routing.get(x)).getOutputStream());
-				dout.writeUTF(outMsg);
-				dout.flush();
+				sendDeadlockMsg(routing, x);
 			} catch(Exception e) {
 				continue;
 			}
@@ -84,7 +97,7 @@ public class ChandyANDModel {
 
 	static void dowork(ArrayList<Integer> routing) throws Exception {
 		if(wfgList.get(myId).contains(myId)) {
-			handleDeadlock();
+			handleDeadlock(routing);
 		}
 		for(Integer x: wfgList.get(myId)) {
 			Integer intermediate = routing.get(x);
@@ -116,8 +129,10 @@ public class ChandyANDModel {
 				}
 				if (type == msgType.PROBE) {	//It's a probe message
 					if (orig == myId) {	//I am the origin, so there's a deadlock
-						handleDeadlock();
-					} else {	//I got a probe message, probe all those that I depend upon if not already done
+						handleDeadlock(routing);
+					} else if (myType == processType.DEADLOCKED) {
+						sendDeadlockMsg(routing, sender);
+					} else if (myType == processType.WAITING) {	//I got a probe message, probe all those that I depend upon if not already done
 						if (!reqSent.contains(orig)) { //First one	
 							for (Integer wf: wfgList.get(myId)) {
 								Integer intermediate = routing.get(wf);
@@ -132,7 +147,7 @@ public class ChandyANDModel {
 						reqSent.add(orig);
 					}
 				} else { //Flag is 1 now, it's a deadlock message
-					handleDeadlock();
+					handleDeadlock(routing);
 				}
 				/*
 				Original one:
@@ -253,6 +268,10 @@ public class ChandyANDModel {
 				s.setSoTimeout(1000);
 				socketMap.put(neigh, s);
 			}
+		}
+
+		if (wfgList.get(myId).size() > 0) {
+			myType = processType.WAITING;
 		}
 
 		dowork(routing.get(myId));
